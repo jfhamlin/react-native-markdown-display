@@ -1,6 +1,5 @@
 import {StyleSheet} from 'react-native';
 
-import getUniqueID from './util/getUniqueID';
 import convertAdditionalStyles from './util/convertAdditionalStyles';
 
 import textStyleProps from './data/textStyleProps';
@@ -180,7 +179,7 @@ export default class AstRenderer {
    * @return {*}
    */
   render = (nodes) => {
-    const root = {type: 'body', key: getUniqueID(), children: nodes};
+    const root = {type: 'body', key: 'mdroot', children: nodes};
     return this.renderNode(root, [], true);
   };
 }

@@ -1,4 +1,3 @@
-import getUniqueID from './getUniqueID';
 import getTokenTypeByToken from './getTokenTypeByToken';
 
 /**
@@ -7,7 +6,7 @@ import getTokenTypeByToken from './getTokenTypeByToken';
  * @param {number} tokenIndex
  * @return {{type: string, content, tokenIndex: *, index: number, attributes: {}, children: *}}
  */
-function createNode(token, tokenIndex) {
+function createNode(token, tokenIndex, parentKey) {
   const type = getTokenTypeByToken(token);
   const content = token.content;
 
@@ -20,6 +19,8 @@ function createNode(token, tokenIndex) {
     }, {});
   }
 
+  const key = parentKey + '_' + type + '_' + tokenIndex;
+
   return {
     type,
     sourceType: token.type,
@@ -27,12 +28,12 @@ function createNode(token, tokenIndex) {
     sourceMeta: token.meta,
     block: token.block,
     markup: token.markup,
-    key: getUniqueID() + '_' + type,
+    key,
     content,
     tokenIndex,
     index: 0,
     attributes,
-    children: tokensToAST(token.children),
+    children: tokensToAST(token.children, key),
   };
 }
 
@@ -41,7 +42,8 @@ function createNode(token, tokenIndex) {
  * @param {Array<{type: string, tag:string, content: string, children: *, attrs: Array}>}tokens
  * @return {Array}
  */
-export default function tokensToAST(tokens) {
+export default function tokensToAST(tokens, parentKey = 'root') {
+  let parentKeyStack = [];
   let stack = [];
   let children = [];
 
@@ -51,7 +53,7 @@ export default function tokensToAST(tokens) {
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
-    const astNode = createNode(token, i);
+    const astNode = createNode(token, i, parentKey);
 
     if (
       !(
@@ -65,9 +67,12 @@ export default function tokensToAST(tokens) {
       if (token.nesting === 1) {
         children.push(astNode);
         stack.push(children);
+        parentKeyStack.push(parentKey);
+        parentKey = astNode.key;
         children = astNode.children;
       } else if (token.nesting === -1) {
         children = stack.pop();
+        parentKey = parentKeyStack.pop();
       } else if (token.nesting === 0) {
         children.push(astNode);
       }
